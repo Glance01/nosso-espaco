@@ -69,7 +69,7 @@ function MainCVApp() {
   const [mobileTab, setMobileTab] = useState<'edit' | 'preview'>('edit');
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isCoverLetterOpen, setIsCoverLetterOpen] = useState(false);
-  const [isInstallModalOpen, setIsInstallModalOpen] = useState(true);
+  const [isInstallModalOpen, setIsInstallModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>('register');
   const [isExporting, setIsExporting] = useState(false);

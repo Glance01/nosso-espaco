@@ -9,44 +9,108 @@ export const AppLogo: React.FC<AppLogoProps> = ({ className = "w-9 h-9", size })
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 64 64"
+      viewBox="0 0 512 512"
       className={className}
       style={size ? { width: size, height: size } : undefined}
       fill="none"
     >
       <defs>
-        <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#2563EB" />
+        <linearGradient id="logoBgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#1E40AF" />
+          <stop offset="50%" stopColor="#2563EB" />
           <stop offset="100%" stopColor="#1D4ED8" />
         </linearGradient>
-        <linearGradient id="docGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+        <linearGradient id="logoSheetGrad" x1="0%" y1="0%" x2="0%" y2="100%">
           <stop offset="0%" stopColor="#FFFFFF" />
           <stop offset="100%" stopColor="#F8FAFC" />
         </linearGradient>
-        <filter id="logoShadow" x="-10%" y="-10%" width="120%" height="120%">
-          <feDropShadow dx="0" dy="3" stdDeviation="3" floodColor="#1E3A8A" floodOpacity="0.2" />
+        <linearGradient id="logoFoldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#CBD5E1" />
+          <stop offset="100%" stopColor="#94A3B8" />
+        </linearGradient>
+        <linearGradient id="logoBadgeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#10B981" />
+          <stop offset="100%" stopColor="#059669" />
+        </linearGradient>
+        <filter id="logoShadow" x="-10%" y="-10%" width="130%" height="130%">
+          <feDropShadow dx="0" dy="16" stdDeviation="18" floodColor="#0F172A" floodOpacity="0.35" />
+        </filter>
+        <filter id="logoSheetShadow" x="-15%" y="-10%" width="130%" height="130%">
+          <feDropShadow dx="0" dy="10" stdDeviation="12" floodColor="#0F172A" floodOpacity="0.25" />
+        </filter>
+        <filter id="logoBadgeShadow" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="6" stdDeviation="8" floodColor="#064E3B" floodOpacity="0.3" />
         </filter>
       </defs>
 
-      {/* Outer Rounded Container */}
-      <rect x="4" y="4" width="56" height="56" rx="16" fill="url(#logoGrad)" filter="url(#logoShadow)" />
+      {/* App Background Squircle */}
+      <rect x="24" y="24" width="464" height="464" rx="112" fill="url(#logoBgGrad)" filter="url(#logoShadow)" />
 
-      {/* Document Sheet */}
-      <rect x="16" y="14" width="32" height="36" rx="6" fill="url(#docGrad)" />
+      {/* Top Glass Highlight */}
+      <rect x="36" y="36" width="440" height="220" rx="96" fill="#FFFFFF" opacity="0.08" />
 
-      {/* Document Header Accent / Avatar Circle */}
-      <circle cx="23" cy="22" r="3.5" fill="#2563EB" />
-      <rect x="29" y="20" width="14" height="2.5" rx="1.25" fill="#1E293B" opacity="0.85" />
-      <rect x="29" y="24" width="10" height="2" rx="1" fill="#64748B" opacity="0.7" />
+      {/* Resume Sheet */}
+      <g filter="url(#logoSheetShadow)">
+        <path
+          d="M 124 100 L 320 100 L 388 168 L 388 412 A 24 24 0 0 1 364 436 L 148 436 A 24 24 0 0 1 124 412 Z"
+          fill="url(#logoSheetGrad)"
+        />
+        <path
+          d="M 320 100 L 320 152 A 16 16 0 0 0 336 168 L 388 168 Z"
+          fill="url(#logoFoldGrad)"
+          opacity="0.85"
+        />
+        <path d="M 320 100 L 320 168 L 388 168 Z" fill="#E2E8F0" />
+      </g>
 
-      {/* Document Lines */}
-      <rect x="20" y="31" width="24" height="2" rx="1" fill="#CBD5E1" />
-      <rect x="20" y="36" width="20" height="2" rx="1" fill="#CBD5E1" />
-      <rect x="20" y="41" width="16" height="2" rx="1" fill="#CBD5E1" />
+      {/* Candidate Photo & Silhouette */}
+      <circle cx="178" cy="166" r="30" fill="#2563EB" />
+      <circle cx="178" cy="158" r="11" fill="#FFFFFF" />
+      <path d="M 160 186 A 18 18 0 0 1 196 186 Z" fill="#FFFFFF" />
 
-      {/* Verification Check Badge */}
-      <circle cx="43" cy="41" r="5" fill="#10B981" />
-      <path d="M41 41l1.5 1.5 3-3" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      {/* Candidate Name & Title Bars */}
+      <rect x="222" y="146" width="90" height="16" rx="8" fill="#0F172A" />
+      <rect x="222" y="172" width="70" height="10" rx="5" fill="#3B82F6" />
+
+      {/* Divider */}
+      <rect x="156" y="214" width="200" height="4" rx="2" fill="#E2E8F0" />
+
+      {/* Experience Rows */}
+      <circle cx="166" cy="242" r="5" fill="#2563EB" />
+      <rect x="182" y="238" width="168" height="9" rx="4.5" fill="#334155" />
+
+      <circle cx="166" cy="268" r="5" fill="#2563EB" />
+      <rect x="182" y="264" width="144" height="9" rx="4.5" fill="#64748B" />
+
+      <circle cx="166" cy="294" r="5" fill="#2563EB" />
+      <rect x="182" y="290" width="124" height="9" rx="4.5" fill="#94A3B8" />
+
+      {/* Skill Tags */}
+      <rect x="156" y="324" width="58" height="20" rx="10" fill="#EFF6FF" stroke="#BFDBFE" strokeWidth="2" />
+      <rect x="166" y="331" width="38" height="6" rx="3" fill="#2563EB" />
+
+      <rect x="222" y="324" width="54" height="20" rx="10" fill="#EFF6FF" stroke="#BFDBFE" strokeWidth="2" />
+      <rect x="232" y="331" width="34" height="6" rx="3" fill="#2563EB" />
+
+      <rect x="284" y="324" width="58" height="20" rx="10" fill="#EFF6FF" stroke="#BFDBFE" strokeWidth="2" />
+      <rect x="294" y="331" width="38" height="6" rx="3" fill="#2563EB" />
+
+      {/* Additional Lines */}
+      <rect x="156" y="364" width="150" height="8" rx="4" fill="#CBD5E1" />
+      <rect x="156" y="384" width="110" height="8" rx="4" fill="#E2E8F0" />
+
+      {/* Verification Badge */}
+      <g filter="url(#logoBadgeShadow)">
+        <circle cx="364" cy="386" r="48" fill="url(#logoBadgeGrad)" stroke="#FFFFFF" strokeWidth="6" />
+        <path
+          d="M 346 386 L 358 398 L 384 372"
+          fill="none"
+          stroke="#FFFFFF"
+          strokeWidth="7"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </g>
     </svg>
   );
 };
