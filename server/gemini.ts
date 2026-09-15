@@ -22,6 +22,26 @@ function getAI(): GoogleGenAI | null {
   return aiClient;
 }
 
+async function generateWithFallback(ai: GoogleGenAI, prompt: string): Promise<string> {
+  const models = ['gemini-3.6-flash', 'gemini-flash-latest', 'gemini-2.5-flash'];
+  let lastError: any = null;
+  for (const model of models) {
+    try {
+      const response = await ai.models.generateContent({
+        model,
+        contents: prompt,
+      });
+      if (response.text?.trim()) {
+        return response.text.trim();
+      }
+    } catch (err: any) {
+      lastError = err;
+      console.warn(`[Gemini Fallback] Model ${model} failed, trying next:`, err?.message || err);
+    }
+  }
+  throw lastError;
+}
+
 export async function improveSummaryWithAI(params: {
   currentSummary: string;
   jobTitle: string;
@@ -46,12 +66,8 @@ Diretrizes:
 - Escreva entre 3 a 5 frases fluidas, impactantes e profissionais.
 - Adapte para o mercado de trabalho moderno.`;
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-3.6-flash',
-      contents: prompt,
-    });
-
-    return response.text?.trim() || params.currentSummary;
+    const text = await generateWithFallback(ai, prompt);
+    return text || params.currentSummary;
   } catch (error: any) {
     console.error('Error calling Gemini for summary:', error?.message);
     return params.currentSummary || 'Profissional experiente e orientado a resultados, com comprovada capacidade de entrega em ambientes dinâmicos.';
@@ -68,12 +84,7 @@ export async function suggestSkillsWithAI(jobTitle: string): Promise<string[]> {
     const prompt = `Gere uma lista JSON contendo as 6 principais competências técnicas e comportamentais mais valorizadas para a profissão: "${jobTitle}".
 Retorne APENAS um array JSON de strings no formato: ["Competência 1", "Competência 2", ...]. Sem blocos de código adicionais.`;
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-3.6-flash',
-      contents: prompt,
-    });
-
-    const text = response.text?.trim() || '[]';
+    const text = await generateWithFallback(ai, prompt);
     const cleaned = text.replace(/```json/g, '').replace(/```/g, '').trim();
     return JSON.parse(cleaned);
   } catch (e) {
@@ -142,12 +153,7 @@ Retorne APENAS um objeto JSON válido (sem markdown, sem texto adicional) com es
   "signOff": "Com os melhores cumprimentos,\n[Nome]"
 }`;
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-3.6-flash',
-      contents: prompt,
-    });
-
-    const text = response.text?.trim() || '{}';
+    const text = await generateWithFallback(ai, prompt);
     const cleaned = text.replace(/```json/g, '').replace(/```/g, '').trim();
     const parsed = JSON.parse(cleaned);
     return { ...defaultLetter, ...parsed };
@@ -248,12 +254,7 @@ Retorne APENAS um objeto JSON válido (sem texto antes ou depois, sem crases de 
   ]
 }`;
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-3.6-flash',
-      contents: prompt,
-    });
-
-    const text = response.text?.trim() || '{}';
+    const text = await generateWithFallback(ai, prompt);
     const cleaned = text.replace(/```json/g, '').replace(/```/g, '').trim();
     const parsed = JSON.parse(cleaned);
     return parsed;
