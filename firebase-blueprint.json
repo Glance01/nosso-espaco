@@ -1,0 +1,57 @@
+{
+  "entities": {
+    "users": {
+      "title": "User Profiles",
+      "description": "User accounts with registration steps data, profile info, and payment subscription status",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "phoneNumber": { "type": "string" },
+        "cityProvince": { "type": "string" },
+        "careerField": { "type": "string" },
+        "experienceLevel": { "type": "string" },
+        "termsAccepted": { "type": "boolean" },
+        "privacyAccepted": { "type": "boolean" },
+        "marketingConsent": { "type": "boolean" },
+        "registeredAt": { "type": "string" },
+        "isPremium": { "type": "boolean" },
+        "premiumExpiresAt": { "type": "string" },
+        "lastActiveAt": { "type": "string" }
+      },
+      "required": ["uid", "email", "termsAccepted"]
+    },
+    "resumes": {
+      "title": "Saved Resumes",
+      "description": "User created CVs and style configurations",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "cvData": { "type": "object" },
+        "styleConfig": { "type": "object" },
+        "updatedAt": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["userId", "updatedAt"]
+    },
+    "transactions": {
+      "title": "Payment Transactions",
+      "description": "Payment records tied to user accounts for lifetime access",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "reference": { "type": "string" },
+        "amount": { "type": "number" },
+        "currency": { "type": "string" },
+        "method": { "type": "string" },
+        "customerPhone": { "type": "string" },
+        "customerEmail": { "type": "string" },
+        "status": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["userId", "reference", "status"]
+    }
+  }
+}

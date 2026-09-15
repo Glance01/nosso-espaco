@@ -1,0 +1,107 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+    --font-serif: 'Lora', Georgia, serif;
+    --font-display: 'DM Sans', var(--font-sans);
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: #F4F7FB;
+    color: #0F172A;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Apple-style Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(147, 197, 253, 0.45);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(59, 130, 246, 0.6);
+}
+
+/* Glassmorphic Apple Surfaces */
+.apple-glass {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+}
+
+.apple-glass-card {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: 0 10px 30px -10px rgba(30, 58, 138, 0.05), 0 2px 6px -2px rgba(30, 58, 138, 0.03);
+}
+
+.apple-glass-card-hover {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.apple-glass-card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 35px -12px rgba(30, 58, 138, 0.1), 0 4px 10px -2px rgba(30, 58, 138, 0.04);
+}
+
+/* Apple 3D Button Style */
+.btn-apple-3d {
+  background: linear-gradient(180deg, #3B82F6 0%, #1D4ED8 100%);
+  box-shadow: 0 1px 2px rgba(255, 255, 255, 0.25) inset, 0 4px 12px rgba(37, 99, 235, 0.35), 0 2px 4px rgba(0, 0, 0, 0.06);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.btn-apple-3d:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 1px 2px rgba(255, 255, 255, 0.35) inset, 0 6px 18px rgba(37, 99, 235, 0.45), 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+.btn-apple-3d:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) inset, 0 2px 6px rgba(37, 99, 235, 0.25);
+}
+
+.btn-apple-warm {
+  background: linear-gradient(180deg, #2563EB 0%, #1D4ED8 100%);
+  box-shadow: 0 1px 2px rgba(255, 255, 255, 0.2) inset, 0 4px 12px rgba(37, 99, 235, 0.3);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.btn-apple-warm:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 1px 2px rgba(255, 255, 255, 0.3) inset, 0 6px 18px rgba(37, 99, 235, 0.4);
+}
+
+/* 3D Floating Canvas for Resume */
+.resume-3d-stage {
+  box-shadow: 0 25px 60px -15px rgba(30, 58, 138, 0.12), 0 10px 25px -10px rgba(30, 58, 138, 0.06);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.resume-3d-stage:hover {
+  transform: translateY(-3px) scale(1.002);
+  box-shadow: 0 35px 75px -20px rgba(30, 58, 138, 0.18), 0 15px 30px -12px rgba(30, 58, 138, 0.08);
+}
+
+/* Apple Smooth Input Fields */
+.apple-input {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 1rem;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 3px rgba(30, 58, 138, 0.02) inset;
+}
+.apple-input:focus {
+  border-color: #3B82F6;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+  outline: none;
+}

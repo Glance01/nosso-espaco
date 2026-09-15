@@ -1,0 +1,6 @@
+{
+  "name": "Candidate-se",
+  "description": "Crie currículos profissionais grátis com modelos modernos e exporte em PDF.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
