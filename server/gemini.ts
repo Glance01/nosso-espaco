@@ -23,7 +23,7 @@ function getAI(): GoogleGenAI | null {
 }
 
 async function generateWithFallback(ai: GoogleGenAI, prompt: string): Promise<string> {
-  const models = ['gemini-2.5-flash', 'gemini-2.0-flash'];
+  const models = ['gemini-3.8-flash', 'gemini-3.6-flash', 'gemini-flash-latest', 'gemini-3.1-flash-lite'];
   let lastError: any = null;
   for (const model of models) {
     try {

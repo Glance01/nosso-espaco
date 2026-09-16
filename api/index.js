@@ -426,7 +426,7 @@ function getAI() {
   return aiClient;
 }
 async function generateWithFallback(ai, prompt) {
-  const models = ["gemini-2.5-flash", "gemini-2.0-flash"];
+  const models = ["gemini-3.8-flash", "gemini-3.6-flash", "gemini-flash-latest", "gemini-3.1-flash-lite"];
   let lastError = null;
   for (const model of models) {
     try {
