@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { CVData, StyleConfig, SubscriptionInfo } from './types';
 import { initialCVData, defaultStyleConfig, emptyCVData } from './data/initialData';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { NotificationProvider, useNotifications } from './context/NotificationContext';
 import { Navbar } from './components/Navbar';
 import { PersonalForm } from './components/Editor/PersonalForm';
 import { ExperienceForm } from './components/Editor/ExperienceForm';
@@ -15,6 +16,7 @@ import { PaymentModal } from './components/Payment/PaymentModal';
 import { AuthModal } from './components/Auth/AuthModal';
 import { LandingPage } from './components/Landing/LandingPage';
 import { InstallAppBanner } from './components/InstallAppBanner';
+import { NotificationDrawer } from './components/Notifications/NotificationDrawer';
 import { WhatsAppWidget } from './components/WhatsAppWidget';
 import { CoverLetterGenerator } from './components/CoverLetterGenerator';
 import { exportCVToPDF } from './lib/pdfExport';
@@ -69,6 +71,7 @@ function MainCVApp() {
   const [mobileTab, setMobileTab] = useState<'edit' | 'preview'>('edit');
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isCoverLetterOpen, setIsCoverLetterOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isInstallModalOpen, setIsInstallModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>('register');
@@ -76,6 +79,30 @@ function MainCVApp() {
   const [isSavingCloud, setIsSavingCloud] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isFullscreenPreviewOpen, setIsFullscreenPreviewOpen] = useState(false);
+
+  const handleNotificationAction = (actionType: string) => {
+    switch (actionType) {
+      case 'coverLetter':
+        setIsCoverLetterOpen(true);
+        break;
+      case 'aiSummary':
+        setActiveEditorTab('personal');
+        setMobileTab('edit');
+        break;
+      case 'template':
+        setActiveEditorTab('design');
+        setMobileTab('edit');
+        break;
+      case 'payment':
+        setIsPaymentModalOpen(true);
+        break;
+      case 'sample':
+        handleLoadSample();
+        break;
+      default:
+        break;
+    }
+  };
 
   // Persistence to local storage
   useEffect(() => {
@@ -245,6 +272,7 @@ function MainCVApp() {
         isSavingCloud={isSavingCloud}
         onOpenCoverLetter={() => setIsCoverLetterOpen(true)}
         onOpenInstallApp={() => setIsInstallModalOpen(true)}
+        onOpenNotifications={() => setIsNotificationsOpen(true)}
       />
 
       {/* Main Workspace */}
@@ -518,6 +546,13 @@ function MainCVApp() {
         onClose={() => setIsInstallModalOpen(false)}
       />
 
+      {/* Notification Center Drawer */}
+      <NotificationDrawer
+        isOpen={isNotificationsOpen}
+        onClose={() => setIsNotificationsOpen(false)}
+        onAction={handleNotificationAction}
+      />
+
       {/* Floating WhatsApp Support Widget */}
       <WhatsAppWidget />
     </div>
@@ -527,7 +562,9 @@ function MainCVApp() {
 export default function App() {
   return (
     <AuthProvider>
-      <MainCVApp />
+      <NotificationProvider>
+        <MainCVApp />
+      </NotificationProvider>
     </AuthProvider>
   );
 }

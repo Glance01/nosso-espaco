@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useNotifications } from '../context/NotificationContext';
 import { SubscriptionInfo } from '../types';
 import { AppLogo } from './AppLogo';
 import {
@@ -18,7 +19,8 @@ import {
   Menu,
   X,
   Lock,
-  MessageCircle
+  MessageCircle,
+  Bell
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -35,6 +37,7 @@ interface NavbarProps {
   isSavingCloud?: boolean;
   onOpenCoverLetter: () => void;
   onOpenInstallApp?: () => void;
+  onOpenNotifications?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -51,11 +54,14 @@ export const Navbar: React.FC<NavbarProps> = ({
   isSavingCloud = false,
   onOpenCoverLetter,
   onOpenInstallApp,
+  onOpenNotifications,
 }) => {
   const { currentUser, userProfile, logout, isPremium } = useAuth();
+  const { unreadCount } = useNotifications();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showMobileUserMenu, setShowMobileUserMenu] = useState(false);
   const [showMobileDrawer, setShowMobileDrawer] = useState(false);
+
 
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-xl border-b border-[#E2E8F0] shadow-[0_4px_20px_-10px_rgba(30,58,138,0.05)] transition-all">
@@ -170,6 +176,25 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <Download className="w-3.5 h-3.5" />
               <span>Instalar App</span>
+            </button>
+          )}
+
+          {/* Notifications Trigger Desktop */}
+          {onOpenNotifications && (
+            <button
+              type="button"
+              id="btn-notifications-desktop"
+              onClick={onOpenNotifications}
+              className="relative p-2.5 bg-slate-100/80 hover:bg-slate-200/80 border border-slate-200 text-slate-700 hover:text-blue-600 rounded-2xl transition-all active:scale-[0.98] shrink-0 cursor-pointer"
+              title="Notificações e Dicas de Emprego"
+              aria-label="Abrir notificações"
+            >
+              <Bell className="w-4 h-4" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white shadow-xs">
+                  {unreadCount}
+                </span>
+              )}
             </button>
           )}
 
@@ -451,6 +476,25 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
           )}
 
+          {/* Mobile Notification Bell */}
+          {onOpenNotifications && (
+            <button
+              type="button"
+              id="btn-mobile-notifications"
+              onClick={onOpenNotifications}
+              className="relative p-2 text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all active:scale-[0.95] border border-slate-200"
+              title="Notificações"
+              aria-label="Abrir notificações"
+            >
+              <Bell className="w-4 h-4" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white shadow-xs">
+                  {unreadCount}
+                </span>
+              )}
+            </button>
+          )}
+
           {/* Mobile Full Menu Toggle (Hamburger) */}
           <button
             type="button"
@@ -554,6 +598,29 @@ export const Navbar: React.FC<NavbarProps> = ({
               Limpar Campos
             </button>
           </div>
+
+          {/* Notifications Button in Drawer */}
+          {onOpenNotifications && (
+            <button
+              type="button"
+              id="btn-mobile-drawer-notifications"
+              onClick={() => {
+                setShowMobileDrawer(false);
+                onOpenNotifications();
+              }}
+              className="w-full flex items-center justify-between p-3 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl text-xs font-bold hover:bg-slate-100 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <Bell className="w-4 h-4 text-blue-600" />
+                <span>Notificações & Dicas de Emprego</span>
+              </div>
+              {unreadCount > 0 && (
+                <span className="px-2 py-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full">
+                  {unreadCount} novas
+                </span>
+              )}
+            </button>
+          )}
 
           <button
             type="button"

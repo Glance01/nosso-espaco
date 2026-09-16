@@ -20,19 +20,68 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Lora:ital,wght@0,400..700;1,400..700&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet" crossorigin="anonymous">
+
+    <!-- Auto-recovery from stale cache or chunk load errors -->
+    <script>
+      window.addEventListener('error', function(e) {
+        var msg = (e && e.message) ? e.message.toLowerCase() : '';
+        if (msg.indexOf('chunk') !== -1 || msg.indexOf('mime type') !== -1 || msg.indexOf('importing module') !== -1) {
+          if (!sessionStorage.getItem('pwa_chunk_recovered')) {
+            sessionStorage.setItem('pwa_chunk_recovered', 'true');
+            if ('serviceWorker' in navigator) {
+              navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                for (var i = 0; i < registrations.length; i++) {
+                  registrations[i].unregister();
+                }
+                if ('caches' in window) {
+                  caches.keys().then(function(names) {
+                    for (var j = 0; j < names.length; j++) caches.delete(names[j]);
+                    window.location.reload();
+                  });
+                } else {
+                  window.location.reload();
+                }
+              });
+            } else {
+              window.location.reload();
+            }
+          }
+        }
+      });
+    </script>
   </head>
-  <body class="bg-slate-50 text-slate-900 antialiased selection:bg-emerald-500 selection:text-white">
-    <div id="root"></div>
+  <body style="background-color: #F4F7FB; min-height: 100vh; margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;" class="bg-[#F4F7FB] text-slate-900 antialiased selection:bg-blue-600 selection:text-white">
+    <div id="root">
+      <!-- Instant Branded Splash Screen while React compiles and mounts -->
+      <div style="min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background-color: #F4F7FB; padding: 24px; text-align: center;">
+        <div style="width: 80px; height: 80px; margin-bottom: 20px; position: relative;">
+          <img src="/logo.svg" alt="Candidate-se" width="80" height="80" style="width: 100%; height: 100%; object-fit: contain; border-radius: 20px; box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.25);" />
+        </div>
+        <h1 style="margin: 0 0 6px 0; font-size: 24px; font-weight: 800; color: #0F172A; letter-spacing: -0.5px;">Candidate-se</h1>
+        <p style="margin: 0 0 24px 0; font-size: 14px; color: #64748B; font-weight: 500;">O seu criador de currículos profissionais</p>
+        
+        <!-- Native Smooth Spinner -->
+        <div style="width: 32px; height: 32px; border: 3px solid #E2E8F0; border-top-color: #2563EB; border-radius: 50%; animation: spinLoader 0.8s linear infinite;"></div>
+        <style>
+          @keyframes spinLoader {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        </style>
+      </div>
+    </div>
+    
     <script type="module" src="/src/main.tsx"></script>
     <script>
       if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js').catch((err) => {
-            console.log('ServiceWorker registration note:', err);
+        window.addEventListener('load', function() {
+          navigator.serviceWorker.register('/sw.js').then(function(reg) {
+            reg.update();
+          }).catch(function(err) {
+            console.log('ServiceWorker note:', err);
           });
         });
       }
     </script>
   </body>
 </html>
-

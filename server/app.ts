@@ -1,8 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { netshop, NetshopInitiateRequest } from './netshop.js';
-import { improveSummaryWithAI, suggestSkillsWithAI, generateTailoredResumeWithAI, generateCoverLetterWithAI } from './gemini.js';
+import { netshop, NetshopInitiateRequest } from './netshop.ts';
+import { improveSummaryWithAI, suggestSkillsWithAI, generateTailoredResumeWithAI, generateCoverLetterWithAI } from './gemini.ts';
 
 dotenv.config();
 

@@ -138,3 +138,17 @@ export interface SavedResume {
   createdAt: string;
 }
 
+export type NotificationType = 'tip' | 'career' | 'system' | 'update' | 'job';
+
+export interface AppNotification {
+  id: string;
+  title: string;
+  message: string;
+  timestamp: string;
+  read: boolean;
+  type: NotificationType;
+  actionText?: string;
+  actionType?: 'sample' | 'coverLetter' | 'template' | 'payment' | 'aiSummary';
+}
+
+
