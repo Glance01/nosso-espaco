@@ -123,6 +123,7 @@ export interface UserProfile {
   privacyAccepted: boolean;
   marketingConsent?: boolean;
   registeredAt: string;
+  passwordHash?: string;
   isPremium?: boolean;
   premiumExpiresAt?: string | null;
   lastActiveAt?: string;

@@ -74,7 +74,7 @@ function MainCVApp() {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isInstallModalOpen, setIsInstallModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>('register');
+  const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>('login');
   const [isExporting, setIsExporting] = useState(false);
   const [isSavingCloud, setIsSavingCloud] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);

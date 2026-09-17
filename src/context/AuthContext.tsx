@@ -55,6 +55,22 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const LOCAL_SESSION_KEY = 'cv_moz_user_session';
 const LOCAL_CRED_STORE_KEY = 'cv_moz_user_creds';
 
+async function hashPassword(pass: string): Promise<string> {
+  try {
+    const enc = new TextEncoder().encode(pass);
+    const hashBuf = await crypto.subtle.digest('SHA-256', enc);
+    const hashArr = Array.from(new Uint8Array(hashBuf));
+    return hashArr.map((b) => b.toString(16).padStart(2, '0')).join('');
+  } catch {
+    let hash = 0;
+    for (let i = 0; i < pass.length; i++) {
+      hash = (hash << 5) - hash + pass.charCodeAt(i);
+      hash |= 0;
+    }
+    return 'h_' + Math.abs(hash).toString(36) + pass.length;
+  }
+}
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -163,7 +179,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (email: string, pass: string) => {
     const cleanEmail = email.trim().toLowerCase();
-    
+    if (!cleanEmail || !pass) {
+      throw new Error('Por favor, preencha o seu e-mail e a sua palavra-passe.');
+    }
+
+    const hashedInput = await hashPassword(pass);
+
     // 1. Try Firebase Auth first
     try {
       const res = await signInWithEmailAndPassword(auth, cleanEmail, pass);
@@ -175,11 +196,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await fetchUserProfile(res.user.uid, res.user.email || '', res.user.displayName || '');
       return;
     } catch (fbErr: any) {
-      // If error is operation-not-allowed or similar, proceed to database query verification
       console.warn('Firebase direct login note:', fbErr?.code || fbErr?.message);
+
+      // CRITICAL SECURITY CHECK:
+      // If Firebase Auth specifically rejected the credentials, DO NOT BYPASS IT!
+      // This happens when the account exists and the password entered is wrong.
+      if (
+        fbErr.code === 'auth/wrong-password' ||
+        fbErr.code === 'auth/invalid-credential' ||
+        fbErr.code === 'auth/invalid-login-credentials'
+      ) {
+        throw new Error('Palavra-passe incorreta. Por favor verifique e tente novamente.');
+      }
+
+      if (fbErr.code === 'auth/too-many-requests') {
+        throw new Error('Muitas tentativas falhadas. A sua conta foi temporariamente bloqueada por segurança. Tente mais tarde ou redefina a senha.');
+      }
+
+      if (fbErr.code === 'auth/user-disabled') {
+        throw new Error('Esta conta foi desativada pelo administrador.');
+      }
+
+      if (fbErr.code === 'auth/invalid-email') {
+        throw new Error('O formato do e-mail inserido é inválido.');
+      }
     }
 
-    // 2. Query Firestore users collection for matching email
+    // 2. Query Firestore users collection for matching email (for offline or synced accounts)
     try {
       const q = query(collection(db, 'users'), where('email', '==', cleanEmail));
       const querySnap = await getDocs(q);
@@ -188,17 +231,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const foundDoc = querySnap.docs[0];
         const profileData = foundDoc.data() as UserProfile;
         
-        // Check local credential store for password match if available
+        let isPasswordVerified = false;
+
+        // Verify passwordHash if available on profile
+        if (profileData.passwordHash) {
+          if (profileData.passwordHash === hashedInput) {
+            isPasswordVerified = true;
+          } else {
+            throw new Error('Palavra-passe incorreta. Por favor verifique e tente novamente.');
+          }
+        }
+
+        // Check local credential store for password match
         const credsRaw = localStorage.getItem(LOCAL_CRED_STORE_KEY);
         if (credsRaw) {
           try {
             const credsMap = JSON.parse(credsRaw);
-            if (credsMap[cleanEmail] && credsMap[cleanEmail] !== pass) {
-              throw new Error('Palavra-passe incorreta. Por favor verifique.');
+            const stored = credsMap[cleanEmail];
+            if (stored) {
+              if (stored === pass || stored === hashedInput) {
+                isPasswordVerified = true;
+              } else {
+                throw new Error('Palavra-passe incorreta. Por favor verifique e tente novamente.');
+              }
             }
           } catch (err: any) {
             if (err.message?.includes('Palavra-passe')) throw err;
           }
+        }
+
+        // If password was never verified, reject!
+        if (!isPasswordVerified) {
+          throw new Error('Palavra-passe incorreta. Por favor verifique a sua senha.');
         }
 
         const syntheticUser: any = {
@@ -212,10 +276,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
     } catch (firestoreErr: any) {
-      console.warn('Firestore fallback check:', firestoreErr);
       if (firestoreErr.message?.includes('Palavra-passe')) {
         throw firestoreErr;
       }
+      console.warn('Firestore fallback check:', firestoreErr);
     }
 
     // 3. Check local credential store as emergency fallback
@@ -224,7 +288,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         const credsMap = JSON.parse(credsRaw);
         if (credsMap[cleanEmail]) {
-          if (credsMap[cleanEmail] !== pass) {
+          const stored = credsMap[cleanEmail];
+          if (stored !== pass && stored !== hashedInput) {
             throw new Error('Palavra-passe incorreta. Por favor tente novamente.');
           }
           const uid = 'usr_' + btoa(cleanEmail).replace(/[^a-zA-Z0-9]/g, '').substring(0, 16);
@@ -276,9 +341,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (fbErr: any) {
       console.warn('Firebase Auth creation notice (activating unified DB account):', fbErr?.code || fbErr?.message);
       
-      // If auth provider is disabled or email error, create deterministic secure UID
+      if (fbErr.code === 'auth/email-already-in-use') {
+        const customErr: any = new Error('Este e-mail já se encontra registado. Experimente iniciar sessão.');
+        customErr.code = 'auth/email-already-in-use';
+        throw customErr;
+      }
+
+      if (fbErr.code === 'auth/weak-password') {
+        const customErr: any = new Error('A palavra-passe deve conter no mínimo 6 caracteres.');
+        customErr.code = 'auth/weak-password';
+        throw customErr;
+      }
+
+      if (fbErr.code === 'auth/invalid-email') {
+        const customErr: any = new Error('O formato de e-mail é inválido.');
+        customErr.code = 'auth/invalid-email';
+        throw customErr;
+      }
+
+      // If auth provider is disabled or network error, create deterministic secure UID
       finalUid = 'mz_' + btoa(cleanEmail).replace(/[^a-zA-Z0-9]/g, '').substring(0, 18) + '_' + Date.now().toString(36);
     }
+
+    const hashedPass = await hashPassword(params.pass);
 
     // 2. Build full UserProfile document
     const newProfile: UserProfile = {
@@ -293,6 +378,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       privacyAccepted: true,
       marketingConsent: params.marketingConsent,
       registeredAt: new Date().toISOString(),
+      passwordHash: hashedPass,
       isPremium: false,
       lastActiveAt: new Date().toISOString(),
     };
@@ -301,7 +387,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const credsRaw = localStorage.getItem(LOCAL_CRED_STORE_KEY) || '{}';
       const credsMap = JSON.parse(credsRaw);
-      credsMap[cleanEmail] = params.pass;
+      credsMap[cleanEmail] = hashedPass;
       localStorage.setItem(LOCAL_CRED_STORE_KEY, JSON.stringify(credsMap));
     } catch (e) {
       console.error('Error storing fallback creds:', e);

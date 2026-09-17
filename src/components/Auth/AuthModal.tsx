@@ -54,7 +54,7 @@ const provincesMozambique = [
 export const AuthModal: React.FC<AuthModalProps> = ({
   isOpen,
   onClose,
-  initialMode = 'register',
+  initialMode = 'login',
   onSuccess,
 }) => {
   const { login, registerThreeStep, resetPassword } = useAuth();
@@ -64,6 +64,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  // Sync mode whenever modal opens or initialMode prop changes
+  React.useEffect(() => {
+    if (isOpen) {
+      setMode(initialMode);
+      setStep(1);
+      setError(null);
+      setSuccessMsg(null);
+    }
+  }, [isOpen, initialMode]);
 
   // Form State
   // Step 1: Credenciais
@@ -250,6 +260,38 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               {mode === 'forgot' && 'Introduza o seu e-mail para redefinir a palavra-passe.'}
             </p>
           </div>
+
+          {/* Mode Selector Tabs (Iniciar Sessão vs Criar Conta) */}
+          {mode !== 'forgot' && (
+            <div className="flex bg-slate-100 p-1 rounded-2xl mb-6 border border-slate-200/80">
+              <button
+                type="button"
+                id="auth-tab-login"
+                onClick={() => switchMode('login')}
+                className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+                  mode === 'login'
+                    ? 'bg-white text-blue-600 shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <Lock className="w-3.5 h-3.5" />
+                <span>Iniciar Sessão</span>
+              </button>
+              <button
+                type="button"
+                id="auth-tab-register"
+                onClick={() => switchMode('register')}
+                className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+                  mode === 'register'
+                    ? 'bg-white text-blue-600 shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span>Criar Conta</span>
+              </button>
+            </div>
+          )}
 
           {/* Stepper for Registration */}
           {mode === 'register' && (
