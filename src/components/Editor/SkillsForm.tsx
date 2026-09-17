@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Skill } from '../../types';
-import { Plus, Trash2, Sparkles, RefreshCw, Star } from 'lucide-react';
+import { Plus, Trash2, Sparkles, RefreshCw, Star, CheckCircle2 } from 'lucide-react';
 
 interface SkillsFormProps {
   skills: Skill[];
@@ -11,6 +11,7 @@ interface SkillsFormProps {
 export const SkillsForm: React.FC<SkillsFormProps> = ({ skills, onChange, jobTitle }) => {
   const [newSkillName, setNewSkillName] = useState('');
   const [isSuggesting, setIsSuggesting] = useState(false);
+  const [aiNotice, setAiNotice] = useState<string | null>(null);
 
   const addSkill = (name?: string) => {
     const finalName = (name || newSkillName).trim();
@@ -41,6 +42,7 @@ export const SkillsForm: React.FC<SkillsFormProps> = ({ skills, onChange, jobTit
 
   const handleSuggestAI = async () => {
     setIsSuggesting(true);
+    setAiNotice(null);
     try {
       const res = await fetch('/api/ai/suggest-skills', {
         method: 'POST',
@@ -57,9 +59,13 @@ export const SkillsForm: React.FC<SkillsFormProps> = ({ skills, onChange, jobTit
             level: 4,
           }));
         onChange([...skills, ...toAdd]);
+        setAiNotice(`+${toAdd.length} competências de ponta adicionadas para ${jobTitle || 'a sua área'}!`);
+        setTimeout(() => setAiNotice(null), 4000);
       }
     } catch (e) {
       console.error(e);
+      setAiNotice('Não foi possível carregar sugestões no momento.');
+      setTimeout(() => setAiNotice(null), 3000);
     } finally {
       setIsSuggesting(false);
     }
@@ -83,9 +89,23 @@ export const SkillsForm: React.FC<SkillsFormProps> = ({ skills, onChange, jobTit
           ) : (
             <Sparkles className="w-3.5 h-3.5 text-blue-600" />
           )}
-          {isSuggesting ? 'A sugerir...' : 'Sugerir com IA'}
+          {isSuggesting ? 'A pesquisar com IA...' : 'Sugerir com IA'}
         </button>
       </div>
+
+      {isSuggesting && (
+        <div className="p-2.5 bg-blue-50/90 border border-blue-200 text-blue-800 rounded-xl text-xs font-semibold flex items-center gap-2 animate-pulse">
+          <RefreshCw className="w-3.5 h-3.5 animate-spin text-blue-600 shrink-0" />
+          <span>A IA Gemini está a identificar as melhores competências do mercado...</span>
+        </div>
+      )}
+
+      {aiNotice && (
+        <div className="p-2.5 bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-xl text-xs font-medium flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+          <span>{aiNotice}</span>
+        </div>
+      )}
 
       {/* Add Skill Input */}
       <div className="flex gap-2">

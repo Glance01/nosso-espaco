@@ -248,9 +248,16 @@ export const PersonalForm: React.FC<PersonalFormProps> = ({ data, onChange, skil
           </button>
         </div>
 
+        {isEnhancing && (
+          <div className="mb-2.5 p-2.5 bg-blue-50/90 border border-blue-200 text-blue-800 rounded-xl text-xs font-semibold flex items-center gap-2 animate-pulse">
+            <RefreshCw className="w-3.5 h-3.5 animate-spin text-blue-600 shrink-0" />
+            <span>A IA Gemini está a reescrever o seu perfil com impacto profissional...</span>
+          </div>
+        )}
+
         {aiNotice && (
-          <div className="mb-2.5 p-3 bg-blue-50/80 border border-blue-200 text-blue-900 rounded-2xl text-xs flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0" />
+          <div className="mb-2.5 p-3 bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-2xl text-xs flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
             <span>{aiNotice}</span>
           </div>
         )}
@@ -259,9 +266,12 @@ export const PersonalForm: React.FC<PersonalFormProps> = ({ data, onChange, skil
           id="input-summary"
           rows={4}
           value={data.summary}
+          disabled={isEnhancing}
           onChange={(e) => updateField('summary', e.target.value)}
           placeholder="Descreva a sua trajetória profissional, competências fundamentais e principais conquistas..."
-          className="apple-input w-full p-3.5 text-sm font-medium text-[#0F172A] placeholder:text-[#94A3B8] resize-y leading-relaxed"
+          className={`apple-input w-full p-3.5 text-sm font-medium text-[#0F172A] placeholder:text-[#94A3B8] resize-y leading-relaxed transition-all ${
+            isEnhancing ? 'border-blue-400 bg-blue-50/30 ring-2 ring-blue-400/20' : ''
+          }`}
         />
         <p className="text-[11px] text-[#64748B] mt-1.5">
           Dica Apple: Mantenha 3 a 5 frases claras focadas em valor e realizações de impacto.

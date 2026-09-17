@@ -22,21 +22,54 @@ function getAI(): GoogleGenAI | null {
   return aiClient;
 }
 
-async function generateWithFallback(ai: GoogleGenAI, prompt: string): Promise<string> {
-  const models = ['gemini-3.8-flash', 'gemini-3.6-flash', 'gemini-flash-latest', 'gemini-3.1-flash-lite'];
+// In-memory cache to make repeated requests instantaneous (< 1ms)
+const aiCache = new Map<string, { value: string; timestamp: number }>();
+const CACHE_TTL_MS = 1000 * 60 * 30; // 30 minutes
+
+async function generateWithFallback(
+  ai: GoogleGenAI,
+  prompt: string,
+  options?: { maxTokens?: number; systemInstruction?: string; jsonMode?: boolean; timeoutMs?: number }
+): Promise<string> {
+  const cacheKey = prompt.trim();
+  const cached = aiCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+    return cached.value;
+  }
+
+  // Priority: 'gemini-3.1-flash-lite' is optimized specifically for ultra-low latency interactive UI
+  const models = ['gemini-3.1-flash-lite', 'gemini-flash-latest', 'gemini-3.8-flash'];
+  const timeoutLimit = options?.timeoutMs || 4500; // 4.5s max per model to prevent user from hanging
+
   let lastError: any = null;
   for (const model of models) {
     try {
-      const response = await ai.models.generateContent({
+      const callPromise = ai.models.generateContent({
         model,
         contents: prompt,
+        config: {
+          maxOutputTokens: options?.maxTokens || 350,
+          temperature: 0.5,
+          systemInstruction:
+            options?.systemInstruction ||
+            'Você é um assistente de IA ultra-rápido para currículos profissionais em Moçambique. Seja direto, conciso e entregue exatamente o resultado final sem preâmbulos.',
+          ...(options?.jsonMode ? { responseMimeType: 'application/json' } : {}),
+        },
       });
-      if (response.text?.trim()) {
-        return response.text.trim();
+
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error(`Timeout after ${timeoutLimit}ms`)), timeoutLimit)
+      );
+
+      const response = await Promise.race([callPromise, timeoutPromise]);
+      const text = response.text?.trim();
+      if (text) {
+        aiCache.set(cacheKey, { value: text, timestamp: Date.now() });
+        return text;
       }
     } catch (err: any) {
       lastError = err;
-      console.warn(`[Gemini Fallback] Model ${model} failed, trying next:`, err?.message || err);
+      console.warn(`[Gemini Fast-Path] Model ${model} skipped (${err?.message || err}), attempting next...`);
     }
   }
   throw lastError;
@@ -66,7 +99,10 @@ Diretrizes:
 - Escreva entre 3 a 5 frases fluidas, impactantes e profissionais.
 - Adapte para o mercado de trabalho moderno.`;
 
-    const text = await generateWithFallback(ai, prompt);
+    const text = await generateWithFallback(ai, prompt, {
+      maxTokens: 250,
+      systemInstruction: 'Você é um redator executivo em Moçambique. Retorne APENAS o texto direto do resumo melhorado (3 a 4 frases), sem títulos, sem aspas e sem preâmbulos.',
+    });
     return text || params.currentSummary;
   } catch (error: any) {
     console.error('Error calling Gemini for summary:', error?.message);
@@ -82,9 +118,13 @@ export async function suggestSkillsWithAI(jobTitle: string): Promise<string[]> {
 
   try {
     const prompt = `Gere uma lista JSON contendo as 6 principais competências técnicas e comportamentais mais valorizadas para a profissão: "${jobTitle}".
-Retorne APENAS um array JSON de strings no formato: ["Competência 1", "Competência 2", ...]. Sem blocos de código adicionais.`;
+Retorne APENAS um array JSON de strings no formato: ["Competência 1", "Competência 2", ...].`;
 
-    const text = await generateWithFallback(ai, prompt);
+    const text = await generateWithFallback(ai, prompt, {
+      maxTokens: 200,
+      jsonMode: true,
+      systemInstruction: 'Retorne APENAS um array JSON de strings com 6 competências para a profissão. Sem código markdown.',
+    });
     const cleaned = text.replace(/```json/g, '').replace(/```/g, '').trim();
     return JSON.parse(cleaned);
   } catch (e) {
@@ -153,7 +193,11 @@ Retorne APENAS um objeto JSON válido (sem markdown, sem texto adicional) com es
   "signOff": "Com os melhores cumprimentos,\n[Nome]"
 }`;
 
-    const text = await generateWithFallback(ai, prompt);
+    const text = await generateWithFallback(ai, prompt, {
+      maxTokens: 750,
+      jsonMode: true,
+      systemInstruction: 'Você é um consultor sénior em Moçambique. Retorne a carta estritamente como JSON válido com os campos solicitados.',
+    });
     const cleaned = text.replace(/```json/g, '').replace(/```/g, '').trim();
     const parsed = JSON.parse(cleaned);
     return { ...defaultLetter, ...parsed };
@@ -254,7 +298,11 @@ Retorne APENAS um objeto JSON válido (sem texto antes ou depois, sem crases de 
   ]
 }`;
 
-    const text = await generateWithFallback(ai, prompt);
+    const text = await generateWithFallback(ai, prompt, {
+      maxTokens: 1100,
+      jsonMode: true,
+      systemInstruction: 'Retorne o currículo completo adaptado estritamente como JSON válido sem markdown.',
+    });
     const cleaned = text.replace(/```json/g, '').replace(/```/g, '').trim();
     const parsed = JSON.parse(cleaned);
     return parsed;

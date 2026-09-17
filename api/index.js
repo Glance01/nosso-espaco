@@ -425,21 +425,41 @@ function getAI() {
   }
   return aiClient;
 }
-async function generateWithFallback(ai, prompt) {
-  const models = ["gemini-3.8-flash", "gemini-3.6-flash", "gemini-flash-latest", "gemini-3.1-flash-lite"];
+var aiCache = /* @__PURE__ */ new Map();
+var CACHE_TTL_MS = 1e3 * 60 * 30;
+async function generateWithFallback(ai, prompt, options) {
+  const cacheKey = prompt.trim();
+  const cached = aiCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+    return cached.value;
+  }
+  const models = ["gemini-3.1-flash-lite", "gemini-flash-latest", "gemini-3.8-flash"];
+  const timeoutLimit = options?.timeoutMs || 4500;
   let lastError = null;
   for (const model of models) {
     try {
-      const response = await ai.models.generateContent({
+      const callPromise = ai.models.generateContent({
         model,
-        contents: prompt
+        contents: prompt,
+        config: {
+          maxOutputTokens: options?.maxTokens || 350,
+          temperature: 0.5,
+          systemInstruction: options?.systemInstruction || "Voc\xEA \xE9 um assistente de IA ultra-r\xE1pido para curr\xEDculos profissionais em Mo\xE7ambique. Seja direto, conciso e entregue exatamente o resultado final sem pre\xE2mbulos.",
+          ...options?.jsonMode ? { responseMimeType: "application/json" } : {}
+        }
       });
-      if (response.text?.trim()) {
-        return response.text.trim();
+      const timeoutPromise = new Promise(
+        (_, reject) => setTimeout(() => reject(new Error(`Timeout after ${timeoutLimit}ms`)), timeoutLimit)
+      );
+      const response = await Promise.race([callPromise, timeoutPromise]);
+      const text = response.text?.trim();
+      if (text) {
+        aiCache.set(cacheKey, { value: text, timestamp: Date.now() });
+        return text;
       }
     } catch (err) {
       lastError = err;
-      console.warn(`[Gemini Fallback] Model ${model} failed, trying next:`, err?.message || err);
+      console.warn(`[Gemini Fast-Path] Model ${model} skipped (${err?.message || err}), attempting next...`);
     }
   }
   throw lastError;
@@ -461,7 +481,10 @@ Diretrizes:
 - Responda apenas com o texto melhorado em Portugu\xEAs (sem introdu\xE7\xF5es, sem aspas e sem explica\xE7\xF5es).
 - Escreva entre 3 a 5 frases fluidas, impactantes e profissionais.
 - Adapte para o mercado de trabalho moderno.`;
-    const text = await generateWithFallback(ai, prompt);
+    const text = await generateWithFallback(ai, prompt, {
+      maxTokens: 250,
+      systemInstruction: "Voc\xEA \xE9 um redator executivo em Mo\xE7ambique. Retorne APENAS o texto direto do resumo melhorado (3 a 4 frases), sem t\xEDtulos, sem aspas e sem pre\xE2mbulos."
+    });
     return text || params.currentSummary;
   } catch (error) {
     console.error("Error calling Gemini for summary:", error?.message);
@@ -475,8 +498,12 @@ async function suggestSkillsWithAI(jobTitle) {
   }
   try {
     const prompt = `Gere uma lista JSON contendo as 6 principais compet\xEAncias t\xE9cnicas e comportamentais mais valorizadas para a profiss\xE3o: "${jobTitle}".
-Retorne APENAS um array JSON de strings no formato: ["Compet\xEAncia 1", "Compet\xEAncia 2", ...]. Sem blocos de c\xF3digo adicionais.`;
-    const text = await generateWithFallback(ai, prompt);
+Retorne APENAS um array JSON de strings no formato: ["Compet\xEAncia 1", "Compet\xEAncia 2", ...].`;
+    const text = await generateWithFallback(ai, prompt, {
+      maxTokens: 200,
+      jsonMode: true,
+      systemInstruction: "Retorne APENAS um array JSON de strings com 6 compet\xEAncias para a profiss\xE3o. Sem c\xF3digo markdown."
+    });
     const cleaned = text.replace(/```json/g, "").replace(/```/g, "").trim();
     return JSON.parse(cleaned);
   } catch (e) {
@@ -525,7 +552,11 @@ Retorne APENAS um objeto JSON v\xE1lido (sem markdown, sem texto adicional) com 
   "signOff": "Com os melhores cumprimentos,
 [Nome]"
 }`;
-    const text = await generateWithFallback(ai, prompt);
+    const text = await generateWithFallback(ai, prompt, {
+      maxTokens: 750,
+      jsonMode: true,
+      systemInstruction: "Voc\xEA \xE9 um consultor s\xE9nior em Mo\xE7ambique. Retorne a carta estritamente como JSON v\xE1lido com os campos solicitados."
+    });
     const cleaned = text.replace(/```json/g, "").replace(/```/g, "").trim();
     const parsed = JSON.parse(cleaned);
     return { ...defaultLetter, ...parsed };
@@ -616,7 +647,11 @@ Retorne APENAS um objeto JSON v\xE1lido (sem texto antes ou depois, sem crases d
     { "id": "cert-1", "name": "Certifica\xE7\xE3o Profissional em ${params.careerField}", "issuer": "Institui\xE7\xE3o Reconhecida", "date": "2022-06" }
   ]
 }`;
-    const text = await generateWithFallback(ai, prompt);
+    const text = await generateWithFallback(ai, prompt, {
+      maxTokens: 1100,
+      jsonMode: true,
+      systemInstruction: "Retorne o curr\xEDculo completo adaptado estritamente como JSON v\xE1lido sem markdown."
+    });
     const cleaned = text.replace(/```json/g, "").replace(/```/g, "").trim();
     const parsed = JSON.parse(cleaned);
     return parsed;
